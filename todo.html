@@ -4,14 +4,13 @@
 
     </head>
     <body>
-        <input type="text" placeholder="Title" id="title"><br><br>
-        <input type="text" placeholder="Description" id="description" ><br><br>
-        <button type="button" onclick="addTodo()">Add todo</button>
+        <input oninput="debounceTodo()" type="text" placeholder="Title" id="title"><br><br>
+        <input oninput="debounceTodo()" type="text" placeholder="Description" id="description" ><br><br>
         <div id="todos"></div>
-    </body>
-
+    
     <script>
         let globalId = 1;
+        let todoState =[];
         function markAsDone(Id){
             const parent = document.getElementById(Id);
             parent.children[2].innerHTML="Done!"
@@ -32,12 +31,44 @@
             child.appendChild(thirdGrandChild);
             return child;
         }
-        function addTodo(){
-            let title = document.getElementById("title").value;
-            let description = document.getElementById("description").value;
+        function updateTodo(newTodo){
             let parent = document.getElementById("todos");
-            parent.appendChild(createChild(title,description,globalId++));
-
+            parent.innerHTML ="";
+            for(let i=0;i<newTodo.length;i++){
+                let title = newTodo[i].title;
+                let description =newTodo[i].description;
+                parent.appendChild(createChild(title,description,globalId++))
+            }
         }
+
+        async function addTodo(){
+            let data =await fetch("http://localhost:3000/todo");
+            let json = await data.json();
+            let todo = json.todoState;
+            globalId =1;
+            todoState=[];
+            for(let i=0;i<todo.length;i++){
+                let title = todo[i].title;
+                let description = todo[i].description;
+                todoState.push({
+                    title : title,
+                    description : description,  
+                    id:globalId++              
+                })
+        }
+            updateTodo(todoState);
+            console.log(todoState)
+        }
+    
+    let timeout;    
+    function debounceTodo(){
+        clearTimeout(timeout);
+        timeout= setTimeout(()=>{
+            addTodo();
+        },5000)
+    }
+        
+
     </script>
+    </body> 
 </html>

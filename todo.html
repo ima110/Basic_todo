@@ -4,19 +4,23 @@
 
     </head>
     <body>
-        <input oninput="debounceTodo()" type="text" placeholder="Title" id="title"><br><br>
-        <input oninput="debounceTodo()" type="text" placeholder="Description" id="description" ><br><br>
-        <div id="todos"></div>
     
     <script>
+        // initializing variables and array
         let globalId = 1;
         let todoState =[];
+        let todoStateM = [];
+
+        // creating function to change status od todo to "done" onclick
         function markAsDone(Id){
             const parent = document.getElementById(Id);
             parent.children[2].innerHTML="Done!"
         }
+
+        // create child element under parent dev  and populate it with content 
         function createChild(title,description,globalId){
             let child = document.createElement("div");
+            child.className = "todo-card";
             let firstGrandChild = document.createElement("div");
             firstGrandChild.innerHTML = title;
             let secondGrandChild = document.createElement("div");
@@ -31,6 +35,8 @@
             child.appendChild(thirdGrandChild);
             return child;
         }
+
+        // create function to update child element with new todo recieved from server
         function updateTodo(newTodo){
             let parent = document.getElementById("todos");
             parent.innerHTML ="";
@@ -41,6 +47,18 @@
             }
         }
 
+        // create function to update child element with new todo type manually by user
+        function updateTodoManual(newTodo){
+            let parent = document.getElementById("todosM");
+            parent.innerHTML ="";
+            for(let i=0;i<newTodo.length;i++){
+                let title = newTodo[i].title;
+                let description =newTodo[i].description;
+                parent.appendChild(createChild(title,description,globalId++))
+            }
+        }
+        
+        // This create async funtion that will fetch data from server and puch it tot todostate array
         async function addTodo(){
             let data =await fetch("http://localhost:3000/todo");
             let json = await data.json();
@@ -59,16 +77,99 @@
             updateTodo(todoState);
             console.log(todoState)
         }
-    
+
+        // This function extract input from input tab once user type it using debounce functionality
+        function inputTodo(){
+            let title = document.getElementById("title").value 
+            let description = document.getElementById("description").value 
+            if(!title || !description){
+                return
+            }
+            todoStateM.push({
+                title : title,
+                description : description,
+                id : "M "+ globalId++
+            })
+            updateTodoManual(todoStateM);
+        }
+        
     let timeout;    
     function debounceTodo(){
         clearTimeout(timeout);
         timeout= setTimeout(()=>{
-            addTodo();
-        },5000)
+            inputTodo();
+        },3000)
     }
-        
+
+    // initiate addTodo() once window is loaded 
+    window.onload = function(){
+        addTodo()
+        setInterval(() => {
+            addTodo()
+        },10000);
+    }  
 
     </script>
+      <input oninput="debounceTodo()" type="text" placeholder="Title" id="title"><br><br>
+      <input oninput="debounceTodo()" type="text" placeholder="Description" id="description" ><br><br>
+      <h3 class="section-title">Manual Todos</h3>
+      <div id="todosM"></div>
+      <h3 class="section-title">Server Todos</h3>
+      <div id="todos"></div>
+    <style>
+        
+    body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        background-color: #f5f5f5;
+    }
+
+    input {
+        padding: 8px;
+        margin: 5px 0;
+        width: 300px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    h3 {
+        margin-top: 30px;
+    }
+
+    .todo-container {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 30px;
+    }
+
+    .todo-card {
+        background-color: #fff;
+        border: 1px solid #ddd;
+        padding: 10px;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .todo-card button {
+        margin-top: 8px;
+        padding: 6px 10px;
+        background-color: #007BFF;
+        border: none;
+        color: white;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .todo-card button:hover {
+        background-color: #0056b3;
+    }
+
+    .section-title {
+        font-size: 18px;
+        font-weight: bold;
+        color: #333;
+    }
+    </style>  
     </body> 
 </html>
